@@ -25,17 +25,13 @@ def read_input(filename):
 def get_weight(G, path):
     weight = 0
     for i in range(len(path) - 1):
-        a = G.get_edge_data(path[i], path[i + 1])
-        if a is None:
-            continue
-        weight += G.get_edge_data(path[i], path[i + 1])["weight"]
+        weight += G[path[i]][path[i + 1]]["weight"]
     return weight
 
 
 def get_weight_cycle(G, path):
     weight = 0
     path = [element for i, tup in enumerate(path) for element in (tup if i == len(path) - 1 else [tup[0]])]
-    path = path[:-1]
     for i in range(len(path) - 1):
         weight += G[path[i]][path[i + 1]]["weight"]
     return weight
@@ -67,13 +63,12 @@ def main():
             # Check if there is a positive weighted cycle from 1 or from any node reachable from 1
             positive_cycle = False
             # for node in nx.descendants(G, source):
-            # if i == 192:
-            #     nx.simple_cycles()
-            #     cycle = nx.find_cycle(G,source=source)
-            cycle = nx.find_cycle(G, source=source,orientation="original")
+            if i == 192:
+                cycle = nx.find_cycle(G,source)
+            cycle = nx.find_negative_cycle(G, source=source, weight='weight')
 
 
-            if get_weight_cycle(G, cycle) < 0:
+            if get_weight(G, cycle) < 0:
                 positive_cycle = True
 
             # If there is a positive weighted cycle, return -1 as a value instead
@@ -83,10 +78,6 @@ def main():
                 print("Unlimited!")
             else:
                 # If there is no positive weighted cycle, find the heaviest path as before
-                pathValues = (path for node in G.nodes() for path in nx.all_simple_paths(G, source, node))
-                if len(list(pathValues)) == 0:
-                    print(0)
-                    continue
                 heaviest_path = min((path for node in G.nodes() for path in nx.all_simple_paths(G, source, node)),
                                     key=lambda path: get_weight(G, path))
                 # Print the result
@@ -98,7 +89,7 @@ def main():
                     print(0)
                     continue
                 print(-get_weight(G, heaviest_path))
-        except nx.NetworkXNoCycle:
+        except nx.NetworkXError:
             # If there is no cycle at all, find the heaviest path as before
             pathValues = (path for node in G.nodes() for path in nx.all_simple_paths(G, source, node))
             if len(list(pathValues)) == 0:
